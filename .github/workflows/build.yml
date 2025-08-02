@@ -2,15 +2,10 @@ name: Windows Release
 
 on:
   push:
-    branches:
-      - 'main'
-      - 'continuous-integration'
-    tags:
-      - 'v*'
+    branches: [main, continuous-integration]
+    tags: ['v*']
   pull_request:
-    branches:
-      - 'main'
-      - 'continuous-integration'
+    branches: [main, continuous-integration]
 
 defaults:
   run:
@@ -31,7 +26,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Get all tags for correct version determination
+      - name: Fetch all tags
         run: git fetch --all --tags -f
         working-directory: ${{ github.workspace }}
 
@@ -46,7 +41,7 @@ jobs:
           modules: ""
           setup-python: false
 
-      - name: Download JOM (Qt's build tool)
+      - name: Download JOM (Qt build tool)
         uses: suisei-cn/actions-download-file@v1
         with:
           url: http://download.qt.io/official_releases/jom/jom.zip
@@ -70,13 +65,15 @@ jobs:
           qmake -r ${{ env.SOURCE_DIR }}\Calculator.pro
           ${{ runner.temp }}\jom\jom -j2
 
-      - name: Copy release executable to build folder
+      - name: Deploy Qt dependencies
         run: |
-          copy ${{ runner.temp }}\build\release\Calculator.exe ${{ runner.temp }}\Calculator.exe
+          mkdir ${{ runner.temp }}\deploy
+          copy ${{ runner.temp }}\build\release\Calculator.exe ${{ runner.temp }}\deploy\
+          windeployqt --release --qmldir ${{ env.SOURCE_DIR }} ${{ runner.temp }}\deploy\Calculator.exe
 
-      - name: Zip build
+      - name: Zip full deployment
         working-directory: ${{ runner.temp }}
-        run: 7z a ${{ env.ARTIFACT }} Calculator.exe
+        run: 7z a ${{ env.ARTIFACT }} .\deploy\*
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
