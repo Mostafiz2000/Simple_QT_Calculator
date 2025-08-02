@@ -24,9 +24,11 @@ jobs:
           pip install aqtinstall
           aqt install-qt windows desktop 5.15.2 win64_msvc2019_64
 
-      - name: Set up Qt in PATH
+      - name: Add Qt bin to PATH
+        shell: powershell
         run: |
-          echo "C:\Users\runneradmin\Qt\5.15.2\msvc2019_64\bin" | Out-File -Append -Encoding ascii $env:GITHUB_PATH
+          $qtPath = "C:\Users\runneradmin\Qt\5.15.2\msvc2019_64\bin"
+          Write-Host "##[add-path]$qtPath"
 
       - name: Build with qmake + nmake
         run: |
