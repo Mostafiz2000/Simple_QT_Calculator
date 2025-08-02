@@ -55,7 +55,7 @@ jobs:
         run:  |
               7z x jom.zip -ojom
               
-      - name: Create build directory
+      - name: Create build directory for app
         run:  mkdir ${{ runner.temp }}\build
 
       - name: Set up Visual Studio shell
