@@ -28,7 +28,7 @@ jobs:
         shell: powershell
         run: |
           $qtPath = "C:\Users\runneradmin\Qt\5.15.2\msvc2019_64\bin"
-          Write-Host "##[add-path]$qtPath"
+          Add-Content -Path $env:GITHUB_PATH -Value $qtPath
 
       - name: Build with qmake + nmake
         run: |
