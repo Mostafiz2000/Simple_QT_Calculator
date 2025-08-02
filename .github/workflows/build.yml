@@ -34,7 +34,7 @@ jobs:
           nmake
 
       - name: Upload EXE as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: CalculatorApp
           path: release\*.exe
