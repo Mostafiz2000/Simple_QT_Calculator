@@ -1,0 +1,40 @@
+name: Build Qt Calculator App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Python (for aqtinstall)
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Qt (5.15.2)
+        run: |
+          pip install aqtinstall
+          aqt install-qt windows desktop 5.15.2 win64_msvc2019_64 -m qtbase
+
+      - name: Set up Qt in PATH
+        run: |
+          echo "C:\Users\runneradmin\Qt\5.15.2\msvc2019_64\bin" >> $env:GITHUB_PATH
+
+      - name: Build with qmake + nmake
+        run: |
+          qmake Calculator.pro
+          nmake
+
+      - name: Upload EXE as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CalculatorApp
+          path: release\*.exe
