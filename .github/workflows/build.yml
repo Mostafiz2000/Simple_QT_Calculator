@@ -2,10 +2,15 @@ name: Windows Release
 
 on:
   push:
-    branches: [main, continuous-integration]
-    tags: ['v*']
+    branches:
+      - 'main'
+      - 'continuous-integration'
+    tags:
+      - 'v*'
   pull_request:
-    branches: [main, continuous-integration]
+    branches:
+      - 'main'
+      - 'continuous-integration'
 
 defaults:
   run:
@@ -26,7 +31,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Fetch all tags
+      - name: Get all tags for correct version determination
         run: git fetch --all --tags -f
         working-directory: ${{ github.workspace }}
 
@@ -41,7 +46,7 @@ jobs:
           modules: ""
           setup-python: false
 
-      - name: Download JOM (Qt build tool)
+      - name: Download JOM (Qt's build tool)
         uses: suisei-cn/actions-download-file@v1
         with:
           url: http://download.qt.io/official_releases/jom/jom.zip
@@ -65,18 +70,35 @@ jobs:
           qmake -r ${{ env.SOURCE_DIR }}\Calculator.pro
           ${{ runner.temp }}\jom\jom -j2
 
-      - name: Deploy Qt dependencies
+      - name: Copy release executable to build folder
         run: |
-          mkdir ${{ runner.temp }}\deploy
-          copy ${{ runner.temp }}\build\release\Calculator.exe ${{ runner.temp }}\deploy\
-          windeployqt --release --qmldir ${{ env.SOURCE_DIR }} ${{ runner.temp }}\deploy\Calculator.exe
+          copy ${{ runner.temp }}\build\release\Calculator.exe ${{ runner.temp }}\Calculator.exe
 
-      - name: Zip full deployment
+      - name: Zip build
         working-directory: ${{ runner.temp }}
-        run: 7z a ${{ env.ARTIFACT }} .\deploy\*
+        run: 7z a ${{ env.ARTIFACT }} Calculator.exe
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT }}
           path: ${{ runner.temp }}\${{ env.ARTIFACT }}
+            - name: Prepare full deployable folder
+        run: |
+          mkdir ${{ runner.temp }}\deploy
+          copy ${{ runner.temp }}\build\release\Calculator.exe ${{ runner.temp }}\deploy\
+          copy ${{ env.SOURCE_DIR }}\icon.ico ${{ runner.temp }}\deploy\icon.ico || echo No icon found
+
+      - name: Run windeployqt
+        run: |
+          windeployqt --release --no-translations --qmldir ${{ env.SOURCE_DIR }} ${{ runner.temp }}\deploy\Calculator.exe
+
+      - name: Zip full deployable build
+        working-directory: ${{ runner.temp }}
+        run: 7z a deploy-full.zip .\deploy\* -r
+
+      - name: Upload full deployable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: calculator-deploy-full
+          path: ${{ runner.temp }}\deploy-full.zip
