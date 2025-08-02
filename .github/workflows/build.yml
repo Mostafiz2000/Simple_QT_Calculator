@@ -83,22 +83,4 @@ jobs:
         with:
           name: ${{ env.ARTIFACT }}
           path: ${{ runner.temp }}\${{ env.ARTIFACT }}
-            - name: Prepare full deployable folder
-        run: |
-          mkdir ${{ runner.temp }}\deploy
-          copy ${{ runner.temp }}\build\release\Calculator.exe ${{ runner.temp }}\deploy\
-          copy ${{ env.SOURCE_DIR }}\icon.ico ${{ runner.temp }}\deploy\icon.ico || echo No icon found
-
-      - name: Run windeployqt
-        run: |
-          windeployqt --release --no-translations --qmldir ${{ env.SOURCE_DIR }} ${{ runner.temp }}\deploy\Calculator.exe
-
-      - name: Zip full deployable build
-        working-directory: ${{ runner.temp }}
-        run: 7z a deploy-full.zip .\deploy\* -r
-
-      - name: Upload full deployable artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: calculator-deploy-full
-          path: ${{ runner.temp }}\deploy-full.zip
+      
