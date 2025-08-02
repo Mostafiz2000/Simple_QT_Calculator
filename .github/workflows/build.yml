@@ -22,7 +22,7 @@ jobs:
       - name: Install Qt (5.15.2)
         run: |
           pip install aqtinstall
-          aqt install-qt windows desktop 5.15.2 win64_msvc2019_64 -m qtbase
+          aqt install-qt windows desktop 5.15.2 win64_msvc2019_64
 
       - name: Set up Qt in PATH
         run: |
