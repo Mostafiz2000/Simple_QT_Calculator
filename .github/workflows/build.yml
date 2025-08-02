@@ -17,7 +17,7 @@ defaults:
 env:
   SOURCE_DIR:   ${{ github.workspace }}
   QT_VERSION:   5.15.2
-  ARTIFACT:     qt-planets-build.zip
+  ARTIFACT:     Calculator-build.zip
 
 jobs:
   build:
