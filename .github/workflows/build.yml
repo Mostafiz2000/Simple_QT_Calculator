@@ -38,3 +38,10 @@ jobs:
         with:
           name: CalculatorApp
           path: release\*.exe
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
