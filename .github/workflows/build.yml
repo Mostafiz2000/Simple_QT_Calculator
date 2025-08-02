@@ -1,44 +1,106 @@
-name: Build Qt Calculator App
+name: Windows Release
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - 'main'
+      - 'continuous-integration'
+    tags:
+      - 'v*'
   pull_request:
-    branches: [ main ]
+    branches:
+      - 'main'
+      - 'continuous-integration'
+
+defaults:
+  run:
+    shell: cmd
+
+env:
+  SOURCE_DIR: ${{ github.workspace }}
+  QT_VERSION: 5.15.2
+  ARTIFACT: calculator-build.zip
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2019
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Python and aqtinstall
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Get all tags for correct version determination
+        run: git fetch --all --tags -f
+        working-directory: ${{ github.workspace }}
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_msvc2019_64
+          dir: ${{ runner.temp }}
+          modules: ""
+          setup-python: false
+
+      - name: Download JOM (Qt's build tool)
+        uses: suisei-cn/actions-download-file@v1
+        with:
+          url: http://download.qt.io/official_releases/jom/jom.zip
+          target: ${{ runner.temp }}\
+
+      - name: Unzip JOM
+        run: 7z x jom.zip -ojom
+        working-directory: ${{ runner.temp }}
+
+      - name: Create build directory
+        run: mkdir ${{ runner.temp }}\build
+
+      - name: Set up Visual Studio shell
+        uses: egor-tensin/vs-shell@v2
+        with:
+          arch: x64
+
+      - name: Build Calculator app
+        working-directory: ${{ runner.temp }}\build
         run: |
-          python -m pip install --upgrade pip
-          pip install aqtinstall
-          aqt install-qt windows desktop 5.15.2 win64_msvc2019_64
-      
-      - name: List Qt bin folder
-        run: dir "C:\Users\runneradmin\Qt\5.15.2\msvc2019_64\bin"
+          qmake -r ${{ env.SOURCE_DIR }}\Calculator.pro
+          ${{ runner.temp }}\jom\jom -j2
 
-      - name: Build Qt project
-        shell: powershell
+      - name: Copy release executable to build folder
         run: |
-          $qtPath = "C:\Users\runneradmin\Qt\5.15.2\msvc2019_64\bin"
-          $env:PATH = "$qtPath;$env:PATH"
-          qmake Calculator.pro
-          nmake
+          copy ${{ runner.temp }}\build\release\Calculator.exe ${{ runner.temp }}\Calculator.exe
 
+      - name: Zip build
+        working-directory: ${{ runner.temp }}
+        run: 7z a ${{ env.ARTIFACT }} Calculator.exe
 
-      - name: Upload EXE as artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CalculatorApp
-          path: release\*.exe
-      
+          name: ${{ env.ARTIFACT }}
+          path: ${{ runner.temp }}\${{ env.ARTIFACT }}
+
       - name: Create GitHub Release
+        id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          files: release/*.exe
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release-upload@v1
+        with:
+          release_id: ${{ steps.create_release.outputs.id }}
+          asset_path: ${{ runner.temp }}\${{ env.ARTIFACT }}
+          asset_name: ${{ env.ARTIFACT }}
+          asset_content_type: application/zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
