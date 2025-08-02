@@ -4,26 +4,24 @@ on:
   push:
     branches:
       - 'main'
-      - 'continuous-integration'
     tags:
       - 'v*'
   pull_request:
     branches:
-      - 'main'
-      - 'continuous-integration'
+    - 'main'
 
 defaults:
   run:
     shell: cmd
 
 env:
-  SOURCE_DIR: ${{ github.workspace }}
-  QT_VERSION: 5.15.2
-  ARTIFACT: calculator-build.zip
+  SOURCE_DIR:   ${{ github.workspace }}
+  QT_VERSION:   5.15.2
+  ARTIFACT:     qt-planets-build.zip
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on:  windows-2019
 
     steps:
       - name: Checkout repo
@@ -32,55 +30,59 @@ jobs:
           submodules: recursive
 
       - name: Get all tags for correct version determination
-        run: git fetch --all --tags -f
-        working-directory: ${{ github.workspace }}
-
+        working-directory:  ${{ github.workspace }}
+        run: |
+          git fetch --all --tags -f
       - name: Install Qt
         uses: jurplel/install-qt-action@v2
         with:
-          version: ${{ env.QT_VERSION }}
-          host: windows
-          target: desktop
-          arch: win64_msvc2019_64
-          dir: ${{ runner.temp }}
-          modules: ""
+          version:      ${{ env.QT_VERSION }}
+          host:         windows
+          target:       desktop
+          arch:         win64_msvc2019_64
+          dir:          ${{ runner.temp }}
+          modules:      qtcharts qt3d
           setup-python: false
 
-      - name: Download JOM (Qt's build tool)
+      - name: Download JOM
         uses: suisei-cn/actions-download-file@v1
         with:
-          url: http://download.qt.io/official_releases/jom/jom.zip
+          url:    http://download.qt.io/official_releases/jom/jom.zip
           target: ${{ runner.temp }}\
 
       - name: Unzip JOM
-        run: 7z x jom.zip -ojom
         working-directory: ${{ runner.temp }}
-
+        run:  |
+              7z x jom.zip -ojom
+              
       - name: Create build directory
-        run: mkdir ${{ runner.temp }}\build
+        run:  mkdir ${{ runner.temp }}\build
 
       - name: Set up Visual Studio shell
         uses: egor-tensin/vs-shell@v2
         with:
           arch: x64
 
-      - name: Build Calculator app
+      - name: Build
         working-directory: ${{ runner.temp }}\build
-        run: |
-          qmake -r ${{ env.SOURCE_DIR }}\Calculator.pro
-          ${{ runner.temp }}\jom\jom -j2
-
-      - name: Copy release executable to build folder
-        run: |
-          copy ${{ runner.temp }}\build\release\Calculator.exe ${{ runner.temp }}\Calculator.exe
-
+        run:  |
+              qmake -r ${{ env.SOURCE_DIR }}\Calculator.pro
+              ${{ runner.temp }}\jom\jom -j2
+              cd release
+              windeployqt --qmldir ${{ env.SOURCE_DIR }} Calculator.exe --pdb --release --compiler-runtime
+              copy C:\Windows\System32\concrt140.dll . 
+              copy C:\Windows\System32\vccorlib140.dll .
+              copy C:\Windows\System32\msvcp140.dll .
+              copy C:\Windows\System32\vcruntime140.dll .
+              
       - name: Zip build
         working-directory: ${{ runner.temp }}
-        run: 7z a ${{ env.ARTIFACT }} Calculator.exe
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        run:  |
+              7z a qt-planets-build.zip ${{ runner.temp }}\build\* -r
+              
+      - name: Save build artifact
+        uses: actions/upload-artifact@master
         with:
           name: ${{ env.ARTIFACT }}
           path: ${{ runner.temp }}\${{ env.ARTIFACT }}
-      
+              
