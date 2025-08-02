@@ -24,14 +24,11 @@ jobs:
           pip install aqtinstall
           aqt install-qt windows desktop 5.15.2 win64_msvc2019_64
 
-      - name: Add Qt bin to PATH
+      - name: Build Qt project
         shell: powershell
         run: |
           $qtPath = "C:\Users\runneradmin\Qt\5.15.2\msvc2019_64\bin"
-          Add-Content -Path $env:GITHUB_PATH -Value $qtPath
-
-      - name: Build with qmake + nmake
-        run: |
+          $env:PATH = "$qtPath;$env:PATH"
           qmake Calculator.pro
           nmake
 
