@@ -5,7 +5,6 @@ A lightweight, cross-platform calculator app developed with C++ and Qt, now feat
 ## Table of Contents
 - [Overview](#overview)
 - [Features](#features)
-- [Screenshots](#screenshots)
 - [Requirements](#requirements)
 - [Installation & Build](#installation--build)
 - [CI/CD Pipeline](#cicd-pipeline)
@@ -26,12 +25,6 @@ A lightweight, cross-platform calculator app developed with C++ and Qt, now feat
 -  Robust error handling (e.g., divide by zero, invalid inputs)
 -  Cross-platform support via Qt framework
 -  Automated CI/CD with GitHub Actions for streamlined build and test workflows
-
----
-
-## Screenshots
-*(Include your app screenshots here—for example, a calculator UI on Linux/macOS/Windows)*
-
 ---
 
 ## Requirements
